@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio FG - Novità Fiscali 2026</title>
+    <!-- Tailwind CSS per lo stile -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons per le icone -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .card-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 pb-12">
+
+    <!-- Header / Logo Studio -->
+    <header class="gradient-bg text-white p-8 pt-12 pb-20 rounded-b-[40px] shadow-xl relative overflow-hidden text-center">
+        <div class="absolute top-[-20px] right-[-20px] w-64 h-64 bg-blue-600 rounded-full blur-[80px] opacity-20"></div>
+        <div class="relative z-10 max-w-2xl mx-auto">
+            <div class="inline-flex items-center justify-center p-4 bg-white/10 rounded-2xl mb-4 backdrop-blur-md border border-white/10 shadow-inner">
+                <i data-lucide="building-2" class="text-blue-400 w-10 h-10"></i>
+            </div>
+            <h1 class="text-3xl font-black tracking-tight mb-1 uppercase">Studio FG</h1>
+            <p class="text-blue-400 font-bold uppercase tracking-[0.2em] text-[10px] mb-6">Consulenza Societaria e Fiscale</p>
+            
+            <div class="inline-block bg-blue-600/30 border border-white/20 rounded-full py-2 px-6 backdrop-blur-sm">
+                <span class="text-sm font-semibold text-white">Aggiornamento Legge di Bilancio 2026</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 -mt-12 relative z-20">
+        
+        <!-- Indicatori Rapidi (KPI) -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-3xl shadow-md border border-slate-100 flex flex-col items-center justify-center">
+                <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Taglio IRPEF</p>
+                <p class="text-3xl font-black text-blue-600">-2%</p>
+                <p class="text-[10px] text-slate-500 font-medium italic">Fascia 28k-50k</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-md border border-slate-100 flex flex-col items-center justify-center">
+                <p class="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Welfare Premi</p>
+                <p class="text-3xl font-black text-emerald-600">1%</p>
+                <p class="text-[10px] text-slate-500 font-medium italic">Imposta Sostitutiva</p>
+            </div>
+        </div>
+
+        <!-- Sezione 1: IRPEF -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6 card-shadow">
+            <div class="p-4 flex items-center gap-3 bg-blue-600 text-white">
+                <i data-lucide="calculator" class="w-6 h-6"></i>
+                <h3 class="font-bold text-lg">Le Nuove Aliquote IRPEF</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Viene confermato il sistema a tre scaglioni, con un beneficio fiscale concentrato sui redditi medi.
+                </p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-l-4 border-blue-400">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Fino a 28.000€</p>
+                            <p class="font-bold text-slate-800">23%</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-blue-50 rounded-2xl border-l-4 border-blue-600">
+                        <div>
+                            <p class="text-[10px] font-black text-blue-400 uppercase">28.001€ - 50.000€</p>
+                            <p class="font-bold text-blue-900 text-lg">33% <span class="text-xs font-normal opacity-60 ml-1">(ex 35%)</span></p>
+                        </div>
+                        <div class="bg-blue-600 text-white text-[9px] px-2 py-1 rounded-lg font-bold">FOCUS 2026</div>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border-l-4 border-slate-800">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Oltre 50.000€</p>
+                            <p class="font-bold text-slate-800">43%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 2: Imprese e Partite IVA -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6 card-shadow">
+            <div class="p-4 flex items-center gap-3 bg-indigo-600 text-white">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                <h3 class="font-bold text-lg">Professionisti e Imprese</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="flex items-start gap-4">
+                    <div class="mt-1 p-2 bg-indigo-50 rounded-xl shrink-0 text-indigo-600 uppercase font-black text-[9px]">Soglia</div>
+                    <p class="text-sm text-slate-700 leading-relaxed">
+                        Regime Forfettario confermato fino a <strong>85.000€</strong> di fatturato annuo.
+                    </p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="mt-1 p-2 bg-indigo-50 rounded-xl shrink-0 text-indigo-600 uppercase font-black text-[9px]">Accesso</div>
+                    <p class="text-sm text-slate-700 leading-relaxed">
+                        Sale a <strong>35.000€</strong> il limite di reddito da lavoro dipendente per mantenere il regime agevolato.
+                    </p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="mt-1 p-2 bg-indigo-50 rounded-xl shrink-0 text-indigo-600 uppercase font-black text-[9px]">Asset</div>
+                    <p class="text-sm text-slate-700 leading-relaxed">
+                        Plusvalenze Crypto: aliquota rideterminata al <strong>28%</strong> per soglie superiori a 2.000€.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 3: Welfare -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-6 card-shadow">
+            <div class="p-4 flex items-center gap-3 bg-emerald-600 text-white">
+                <i data-lucide="users" class="w-6 h-6"></i>
+                <h3 class="font-bold text-lg">Lavoro e Welfare</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                    <p class="text-[10px] font-black text-emerald-600 uppercase mb-1">Premi di Risultato</p>
+                    <p class="text-sm text-emerald-900 font-bold">Imposta sostitutiva all'1%</p>
+                    <p class="text-[10px] text-emerald-700 mt-1 italic">Tetto massimo agevolabile: 5.000€</p>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                        <i data-lucide="euro" class="text-orange-600 w-4 h-4"></i>
+                        <span>Fringe Benefit: fino a <strong>2.000€</strong> per chi ha figli a carico.</span>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                        <i data-lucide="check-circle" class="text-blue-600 w-4 h-4"></i>
+                        <span>Buoni Pasto elettronici esenti fino a <strong>10,00€</strong> al giorno.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione 4: Casa e Riscossione -->
+        <div class="grid grid-cols-1 gap-6 mb-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden card-shadow">
+                <div class="p-4 flex items-center gap-3 bg-orange-500 text-white">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                    <h3 class="font-bold text-lg">Bonus Edilizi 2026</h3>
+                </div>
+                <div class="p-5">
+                    <div class="flex justify-between items-center bg-orange-50 p-4 rounded-2xl mb-2">
+                        <span class="text-sm font-bold text-orange-900 italic">Prima Casa</span>
+                        <span class="text-2xl font-black text-orange-600">50%</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl opacity-60">
+                        <span class="text-sm font-medium text-slate-600">Altri Immobili</span>
+                        <span class="text-xl font-bold text-slate-500">36%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden card-shadow">
+                <div class="p-4 flex items-center gap-3 bg-rose-600 text-white">
+                    <i data-lucide="scale" class="w-6 h-6"></i>
+                    <h3 class="font-bold text-lg text-white">Riscossione</h3>
+                </div>
+                <div class="p-5">
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        Apertura <strong>Rottamazione Quinquies</strong> per i carichi affidati fino al 31/12/2023. Sanzioni e interessi azzerati.
+                    </p>
+                    <div class="bg-rose-950 text-white p-3 rounded-xl text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider opacity-60">Scadenza adesione</p>
+                        <p class="text-lg font-black">GIUGNO 2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Firma e Contatti Finali -->
+        <footer class="mt-12 bg-white rounded-[40px] p-10 border border-slate-100 shadow-xl text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-500"></div>
+            
+            <p class="text-slate-400 text-[10px] uppercase font-black tracking-widest mb-8 italic">Contatti Professionali</p>
+            
+            <div class="flex flex-col gap-8 items-center">
+                <div class="space-y-1">
+                    <p class="text-slate-900 font-black text-2xl tracking-tight">Dott. Fabio Brocchi</p>
+                    <p class="text-blue-600 font-bold text-xs uppercase tracking-widest">Studio FG</p>
+                    <div class="w-12 h-1.5 bg-blue-600 rounded-full mx-auto mt-4"></div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 w-full max-w-sm mt-4">
+                    <a href="tel:3913854594" class="flex items-center justify-between px-6 py-4 w-full bg-slate-900 text-white rounded-3xl font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200 group">
+                        <div class="flex items-center gap-3 italic">
+                          <i data-lucide="phone" class="text-blue-400 w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                          <span>Chiama Studio</span>
+                        </div>
+                        <span class="text-blue-400 font-black tracking-tighter">391 385 4594</span>
+                    </a>
+                    
+                    <a href="mailto:fabio@studiofgsrl.it" class="flex items-center justify-between px-6 py-4 w-full bg-blue-50 text-blue-900 rounded-3xl font-bold hover:bg-blue-100 transition-all active:scale-95 border border-blue-100">
+                        <div class="flex items-center gap-3 italic">
+                          <i data-lucide="mail" class="w-5 h-5"></i>
+                          <span>Invia Email</span>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 opacity-30"></i>
+                    </a>
+                </div>
+
+                <div class="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 max-w-sm">
+                  <p class="text-[11px] text-slate-500 leading-relaxed italic">
+                    "Pianifichiamo insieme il nuovo anno fiscale per massimizzare le opportunità e minimizzare i rischi per la tua attività."
+                  </p>
+                </div>
+            </div>
+            
+            <div class="mt-12 pt-8 border-t border-slate-100">
+                <p class="text-[10px] text-slate-300 font-medium">
+                  Informazioni a scopo divulgativo soggette a modifiche normative.<br/>
+                  © 2026 Studio FG - Tutti i diritti riservati.
+                </p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Inizializzazione icone Lucide
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+
