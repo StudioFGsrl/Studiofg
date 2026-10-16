@@ -15,7 +15,8 @@ const QUERY = 'in:inbox -from:me newer_than:3d';
 const MAX_MESSAGGI = 100;
 
 // Regole: nome etichetta Gmail, campo da controllare e regex (case-insensitive),
-// copiate dai filtri dello scenario Make.
+// copiate dai filtri dello scenario Make. "escludi" (facoltativo): se il campo
+// corrisponde, la regola non si applica.
 const REGOLE = [
   {
     etichetta: 'Contabilità mensile',
@@ -25,7 +26,9 @@ const REGOLE = [
   {
     etichetta: 'Fisco & PEC',
     campo: 'oggetto',
-    regex: /agenzia delle entrate|cartella|\bf24\b|ritenuta|dichiarazion|\bpec\b/i,
+    regex: /agenzia delle entrate|cartella|ritenuta|dichiarazion|\bpec\b/i,
+    // Le mail sugli F24 non vanno in Fisco & PEC.
+    escludi: /\bf24\b/i,
   },
   {
     etichetta: 'Interno studio',
@@ -86,7 +89,10 @@ function applicaEtichette() {
     };
 
     const daAggiungere = REGOLE
-      .filter(function (r) { return r.regex.test(valori[r.campo]); })
+      .filter(function (r) {
+        const v = valori[r.campo];
+        return r.regex.test(v) && !(r.escludi && r.escludi.test(v));
+      })
       .map(function (r) { return idEtichette[r.etichetta]; });
     if (daAggiungere.length === 0) daAggiungere.push(idEtichette[ETICHETTA_ALTRO]);
 

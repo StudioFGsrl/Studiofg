@@ -4,12 +4,15 @@ Sostituisce lo scenario Make **"Etichette automatiche Gmail"** (ID 7881364) con
 uno script che gira direttamente nell'account Google: nessuna operazione Make
 consumata, stessa logica.
 
-## Regole (identiche allo scenario Make)
+## Regole
+
+Uguali allo scenario Make, tranne che le mail con `F24` nell'oggetto non
+ricevono più l'etichetta Fisco & PEC.
 
 | Etichetta | Condizione |
 |---|---|
 | Contabilità mensile | oggetto contiene `contabilit`, `estratto conto`, `fatture attive/passive`, `presenze` |
-| Fisco & PEC | oggetto contiene `agenzia delle entrate`, `cartella`, `F24`, `ritenuta`, `dichiarazion…`, `PEC` |
+| Fisco & PEC | oggetto contiene `agenzia delle entrate`, `cartella`, `ritenuta`, `dichiarazion…`, `PEC`, **ma non** `F24` |
 | Interno studio | mittente `@studiobrocchi.it` |
 | Clienti | mittente in elenco clienti (domini e indirizzi in `Codice.gs`) |
 | Altro | nessuna delle regole precedenti |
