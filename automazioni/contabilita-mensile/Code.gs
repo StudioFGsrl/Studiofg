@@ -69,7 +69,7 @@ function esegui_(soloSegna) {
   var errori = [];
   var salvati = 0;
 
-  var threads = etichetta.getThreads(0, MAX_THREAD);
+  var threads = threadDaElaborare_(etichetta);
   for (var i = 0; i < threads.length; i++) {
     var messaggi = threads[i].getMessages();
     for (var j = 0; j < messaggi.length; j++) {
@@ -84,7 +84,9 @@ function esegui_(soloSegna) {
       var mittente = estraiIndirizzo_(msg.getFrom());
       if (msg.getDate() < dataMinima || daEscludere_(mittente, mioIndirizzo)) continue;
 
-      var allegati = allegatiVeri_(msg);
+      var allegati = sempreContabilita_(mittente)
+        ? msg.getAttachments({ includeInlineImages: false, includeAttachments: true })
+        : allegatiVeri_(msg);
       if (allegati.length === 0) continue;
 
       if (!soloSegna) {
@@ -111,6 +113,29 @@ function chiudi_(props, errori, salvati) {
     // Lanciare l'errore fa partire la mail di notifica di Apps Script.
     throw new Error('Errori su ' + errori.length + ' mail:\n' + errori.join('\n'));
   }
+}
+
+/**
+ * Thread con l'etichetta, più quelli dei mittenti in CONFIG.mittentiSempreContabilita
+ * (elaborati anche se l'etichetta non è stata messa).
+ */
+function threadDaElaborare_(etichetta) {
+  var threads = etichetta.getThreads(0, MAX_THREAD);
+  var sempre = CONFIG.mittentiSempreContabilita || [];
+  if (sempre.length) {
+    var query = '{' + sempre.map(function (m) { return 'from:' + m; }).join(' ') + '} has:attachment newer_than:' + GIORNI_FINESTRA + 'd';
+    var visti = {};
+    threads.forEach(function (t) { visti[t.getId()] = true; });
+    GmailApp.search(query, 0, MAX_THREAD).forEach(function (t) {
+      if (!visti[t.getId()]) threads.push(t);
+    });
+  }
+  return threads;
+}
+
+/** Mittenti i cui allegati sono sempre contabilità: tutti salvati, senza filtri. */
+function sempreContabilita_(mittente) {
+  return (CONFIG.mittentiSempreContabilita || []).indexOf(mittente) !== -1;
 }
 
 /** Indirizzi propri e del dominio dello studio (equivale a -from:me -from:studiobrocchi.it). */

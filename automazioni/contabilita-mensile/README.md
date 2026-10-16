@@ -13,6 +13,8 @@ escludendo quelle inviate da te o da `@studiobrocchi.it`, e ricevute dal 10/10/2
   se mancano.
 - **Mittente non riconosciuto**: salva in `<cartella principale>/AAAA-MM Da smistare`.
 - Scarta le immagini sotto i 30 KB, cioè i loghi nelle firme.
+- I mittenti in `mittentiSempreContabilita` vengono elaborati anche se la mail non ha
+  l'etichetta, e ogni loro allegato viene salvato senza filtri.
 
 Rispetto a Make, ogni mail viene ricordata (per 60 giorni) e non viene mai salvata due
 volte. Se un salvataggio fallisce, la mail viene ritentata all'esecuzione successiva e

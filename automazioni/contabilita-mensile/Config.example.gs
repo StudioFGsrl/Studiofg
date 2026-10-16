@@ -20,6 +20,11 @@ var CONFIG = {
     'cliente@example.com': 'ID_CARTELLA_SOCIETA'
   },
 
+  // Mittenti (minuscolo) i cui allegati sono sempre contabilità: le loro mail vengono
+  // elaborate anche senza l'etichetta e ogni allegato viene salvato, senza filtri.
+  // Devono comparire anche in "mittenti" o "domini" per sapere in quale cartella salvare.
+  mittentiSempreContabilita: ['cliente@example.com'],
+
   // Dominio del mittente → ID cartella (usato se l'indirizzo esatto non è in "mittenti").
   domini: {
     'example.it': 'ID_CARTELLA_SOCIETA'
