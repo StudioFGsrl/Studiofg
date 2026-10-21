@@ -1,8 +1,6 @@
 // Strumenti MCP esposti a Claude. Tutti in sola lettura: le API di scrittura (Archivia, Aggiorna,
 // Inserisci, Elimina) esistono in PROFIS ma volutamente non sono esposte.
 
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
@@ -97,7 +95,20 @@ interface DownloadOut {
   NomeFile?: string;
 }
 
-export function registerTools(server: McpServer, cfg: Config, client = new ProfisClient(cfg)): void {
+/** Salva un file scaricato e restituisce dove è finito (solo su Node, con PROFIS_DOWNLOAD_DIR). */
+export type SaveFile = (nome: string, bytes: Uint8Array) => Promise<string>;
+
+const estensione = (nome: string) => {
+  const i = nome.lastIndexOf(".");
+  return i > 0 ? nome.slice(i).toLowerCase() : "";
+};
+
+export function registerTools(
+  server: McpServer,
+  cfg: Config,
+  client = new ProfisClient(cfg),
+  saveFile?: SaveFile,
+): void {
   const text = (t: string, isError = false): CallToolResult => ({ isError, content: [{ type: "text", text: t }] });
 
   const errore = (err: unknown): CallToolResult =>
@@ -136,20 +147,18 @@ export function registerTools(server: McpServer, cfg: Config, client = new Profi
       return text(`Download non riuscito${msg ? `: ${msg}` : ""}\n${JSON.stringify(data?.Esito ?? data)}`, true);
     }
 
-    const nome = path.basename(data.NomeFile || "documento").replace(/[^\w.\- ]/g, "_");
+    const nome = (data.NomeFile || "documento").split(/[\\/]/).pop()!.replace(/[^\w.\- ]/g, "_");
     const bytes = Buffer.from(buffer, "base64");
-    const mimeType = MIME[path.extname(nome).toLowerCase()] ?? "application/octet-stream";
+    const mimeType = MIME[estensione(nome)] ?? "application/octet-stream";
 
-    if (cfg.downloadDir) {
-      await mkdir(cfg.downloadDir, { recursive: true });
-      const dest = path.join(cfg.downloadDir, `${guidDoc.replace(/[^\w-]/g, "_")}_${nome}`);
-      await writeFile(dest, bytes);
+    if (saveFile) {
+      const dest = await saveFile(`${guidDoc.replace(/[^\w-]/g, "_")}_${nome}`, bytes);
       return text(`File salvato: ${dest}\nNome: ${nome}\nTipo: ${mimeType}\nDimensione: ${bytes.length} byte`);
     }
     if (bytes.length > cfg.maxFileBytes) {
       return text(
         `Il file ${nome} pesa ${bytes.length} byte, oltre il limite di ${cfg.maxFileBytes}. ` +
-          "Imposta PROFIS_DOWNLOAD_DIR per salvarlo su disco.",
+          "Restringi la richiesta o, sul PC, imposta PROFIS_DOWNLOAD_DIR per salvarlo su disco.",
         true,
       );
     }

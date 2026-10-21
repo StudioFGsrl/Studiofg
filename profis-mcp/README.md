@@ -84,32 +84,44 @@ In `claude_desktop_config.json`, con il `.env` già compilato:
 claude mcp add profis -- node /percorso/profis-mcp/dist/index.js
 ```
 
-## Pubblicazione sul dominio (es. `mcp.studiofgsrl.it`)
+## Pubblicazione online
 
-In modalità HTTP il server richiede due variabili:
-- **`MCP_AUTH_TOKEN`**: almeno 32 caratteri casuali. Si genera con `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
-- **`MCP_ALLOWED_HOSTS=mcp.studiofgsrl.it`**: senza questa il server risponde 403 alle richieste che arrivano dal dominio.
+Online il server è protetto da **`MCP_AUTH_TOKEN`**: almeno 32 caratteri casuali tra lettere, cifre, `-` e `_`.
+L'indirizzo da dare a Claude è **`https://<indirizzo-del-server>/mcp/<MCP_AUTH_TOKEN>`**. Il token sta nell'URL perché i connettori personalizzati di claude.ai non permettono di aggiungere header. Va trattato come una password.
 
-L'indirizzo da dare a Claude è **`https://mcp.studiofgsrl.it/mcp/<MCP_AUTH_TOKEN>`**. Il token sta nell'URL perché i connettori personalizzati di claude.ai non permettono di aggiungere header. Va trattato come una password.
+Con Node.js su un hosting proprio (alternative A e B) serve anche **`MCP_ALLOWED_HOSTS`**, con il nome del sottodominio (es. `mcp.studiofgsrl.it`). Senza, il server risponde 403. Su Cloudflare non serve.
 
-### Consigliato: Render + DNS su Register.it
+### Consigliato: Cloudflare Workers (gratuito)
 
-Il dominio `studiofgsrl.it` è su Register.it con hosting WordPress, che non esegue Node.js. Il server gira quindi su [Render](https://render.com) e da Register.it si punta lì solo il sottodominio `mcp`. Il sito WordPress non cambia.
+Il dominio `studiofgsrl.it` è su Register.it con hosting solo WordPress, che non esegue Node.js. Il server gira quindi su **Cloudflare Workers**: piano gratuito fino a 100.000 richieste al giorno, sempre acceso e con HTTPS incluso. Il sito WordPress e il DNS restano su Register.it. L'indirizzo sarà del tipo `https://profis-mcp.<tuo-nome>.workers.dev`.
 
 1. **Token:** generalo sul PC con
    `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
-   (oppure con qualsiasi generatore di password, purché usi solo lettere, cifre, `-` e `_`, con almeno 32 caratteri).
-2. **Render:** crea un account → *New* → *Blueprint* → collega il repository GitHub `studiofgsrl/studiofg`. Render legge `render.yaml` dalla radice del repository e chiede i valori segreti: `MCP_AUTH_TOKEN`, `PROFIS_APP_ID`, `PROFIS_USER`, `PROFIS_PASSWORD`, più il gruppo se serve (altrimenti lascia vuoto).
-   Piano **Starter** (circa 7 $/mese): quello gratuito si spegne dopo un periodo di inattività e Claude andrebbe in timeout.
-3. **Verifica:** `https://profis-mcp.onrender.com/health` deve rispondere `{"ok":true}`.
-4. **DNS su Register.it:** *Dominio & DNS* → gestione DNS di `studiofgsrl.it` → aggiungi un record **CNAME** con nome `mcp` e valore `profis-mcp.onrender.com`.
-   Poi in Render → *Settings* → *Custom Domains* attendi la verifica: il certificato HTTPS lo crea Render.
-5. **Verifica finale:** `https://mcp.studiofgsrl.it/health`.
-6. **Indirizzo IP per Sistemi:** se PROFIS accetta solo IP abilitati, in Render → *Connect* → *Outbound* trovi gli IP in uscita da comunicare a Sistemi.
+   (servono almeno 32 caratteri tra lettere, cifre, `-` e `_`).
+2. **Account:** registrati gratis su [dash.cloudflare.com](https://dash.cloudflare.com). Non serve la carta di credito.
+3. **Collega GitHub:** *Workers & Pages* → *Create* → *Import a repository* → autorizza GitHub e scegli `studiofgsrl/studiofg`. Poi:
+   - Project name: `profis-mcp`
+   - Production branch: il branch con questo codice
+   - Build command: lascia vuoto
+   - Deploy command: `npx wrangler deploy`
+   - *Advanced settings* → Root directory: **`profis-mcp`**
+4. **Segreti:** a deploy finito, apri il Worker → *Settings* → *Variables and Secrets* → *Add*, tipo **Secret**:
+   `MCP_AUTH_TOKEN`, `PROFIS_APP_ID`, `PROFIS_USER`, `PROFIS_PASSWORD`, più `PROFIS_GRUPPO` / `PROFIS_GRUPPO_PWD` se servono.
+   Salva con *Deploy*.
+5. **Verifica:** `https://profis-mcp.<tuo-nome>.workers.dev/health` deve rispondere `{"ok":true}`.
+6. **Claude:** *Impostazioni → Connettori → Aggiungi connettore personalizzato* con URL
+   `https://profis-mcp.<tuo-nome>.workers.dev/mcp/<MCP_AUTH_TOKEN>`.
 
-Se Render assegna un nome diverso da `profis-mcp.onrender.com` (succede quando è già occupato), usa quello nel CNAME e aggiornalo in `MCP_ALLOWED_HOSTS`.
+Ogni push sul branch scelto ripubblica il Worker da solo. In alternativa, dal PC: `npx wrangler login`, `npx wrangler secret put MCP_AUTH_TOKEN` (e così per gli altri) e `npm run deploy:cloudflare`.
 
-### A) Hosting condiviso con cPanel ("Setup Node.js App")
+Note:
+- Su Cloudflare i file scaricati arrivano a Claude direttamente: `PROFIS_DOWNLOAD_DIR` non si usa.
+- **Limite CPU del piano gratuito:** circa 10 ms di calcolo per richiesta (l'attesa delle risposte di PROFIS non conta). Ricerche e letture ci stanno. Il download di file grandi, circa 1 MB o più, può superarlo e fallire con l'errore "Exceeded CPU limit". In quel caso il piano Workers Paid (5 $/mese) lo porta a 30 secondi.
+- Gli IP in uscita di Cloudflare non sono fissi. Se Sistemi accetta solo IP autorizzati, serve un'altra soluzione, come un VPS o Google Cloud Run.
+- Per usare `mcp.studiofgsrl.it` invece dell'indirizzo `workers.dev` bisognerebbe spostare il DNS del dominio su Cloudflare. Non è necessario.
+- Test nel runtime di Cloudflare: `npm run test:worker`.
+
+### Alternativa A) Hosting con cPanel ("Setup Node.js App")
 
 1. **Sottodominio:** in cPanel → *Domini*, crea `mcp.studiofgsrl.it` e attiva il certificato SSL (AutoSSL / Let's Encrypt).
 2. **File:** carica e decomprimi `profis-mcp-hosting.zip` in una cartella fuori da `public_html`, ad esempio `/home/<utente>/profis-mcp`. Lo zip contiene già il codice compilato.
@@ -126,9 +138,9 @@ Se Render assegna un nome diverso da `profis-mcp.onrender.com` (succede quando �
 5. Clicca **Run NPM Install**, poi **Restart**.
 6. **Verifica:** `https://mcp.studiofgsrl.it/health` deve rispondere `{"ok":true}`.
 
-Se *Setup Node.js App* non c'è, l'hosting non esegue Node.js. In quel caso serve un VPS (soluzione B) o un servizio come Render o Railway, con il sottodominio `mcp` puntato lì.
+Se *Setup Node.js App* non c'è, l'hosting non esegue Node.js. È il caso degli hosting WordPress di Register.it: usa Cloudflare Workers.
 
-### B) VPS con Docker
+### Alternativa B) VPS con Docker
 
 ```bash
 cp .env.example .env      # compila credenziali, MCP_AUTH_TOKEN e MCP_DOMAIN=mcp.studiofgsrl.it
@@ -139,8 +151,8 @@ Prima punta il record DNS `mcp.studiofgsrl.it` all'IP del server. Caddy ottiene 
 
 ### Collegarlo a Claude
 
-- **claude.ai / app Claude:** *Impostazioni → Connettori → Aggiungi connettore personalizzato*, URL `https://mcp.studiofgsrl.it/mcp/<token>`.
-- **Claude Code:** `claude mcp add --transport http profis https://mcp.studiofgsrl.it/mcp --header "Authorization: Bearer <token>"`.
+- **claude.ai / app Claude:** *Impostazioni → Connettori → Aggiungi connettore personalizzato*, URL `https://<indirizzo-del-server>/mcp/<token>`.
+- **Claude Code:** `claude mcp add --transport http profis https://<indirizzo-del-server>/mcp --header "Authorization: Bearer <token>"`.
 
 ## Nota: PROFIS ha anche un endpoint MCP nativo
 

@@ -1,8 +1,6 @@
 // Configurazione letta da variabili d'ambiente (vedi .env.example).
 
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 export interface Config {
   baseUrl: string;
@@ -23,39 +21,31 @@ export interface Config {
   allowedHosts?: string[];
 }
 
-function env(name: string): string | undefined {
-  const v = process.env[name];
-  return v === undefined || v.trim() === "" ? undefined : v.trim();
-}
-
-function required(name: string): string {
-  const v = env(name);
-  if (!v) throw new Error(`Variabile d'ambiente mancante: ${name}`);
-  return v;
-}
+type Source = Record<string, unknown>;
 
 // PROFIS vuole le password già cifrate SHA256: si può fornire la password in chiaro o l'hash pronto.
 export function sha256Hex(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
-function hashed(plainVar: string, hashVar: string): string | undefined {
-  const hash = env(hashVar);
-  if (hash) return hash;
-  const plain = env(plainVar);
-  return plain ? sha256Hex(plain) : undefined;
-}
+// La sorgente è process.env su Node, oppure i binding (variabili e segreti) su Cloudflare Workers.
+export function loadConfig(source: Source = process.env): Config {
+  const env = (name: string): string | undefined => {
+    const v = source[name];
+    return typeof v !== "string" || v.trim() === "" ? undefined : v.trim();
+  };
+  const required = (name: string): string => {
+    const v = env(name);
+    if (!v) throw new Error(`Variabile d'ambiente mancante: ${name}`);
+    return v;
+  };
+  const hashed = (plainVar: string, hashVar: string): string | undefined => {
+    const hash = env(hashVar);
+    if (hash) return hash;
+    const plain = env(plainVar);
+    return plain ? sha256Hex(plain) : undefined;
+  };
 
-// Carica il file .env della cartella profis-mcp (o quello indicato in PROFIS_ENV_FILE).
-// Le variabili già impostate, ad esempio da claude_desktop_config.json, hanno la precedenza.
-export function loadEnvFile(): string | undefined {
-  const file = env("PROFIS_ENV_FILE") ?? fileURLToPath(new URL("../.env", import.meta.url));
-  if (!existsSync(file)) return undefined;
-  process.loadEnvFile(file);
-  return file;
-}
-
-export function loadConfig(): Config {
   const cfg: Config = {
     baseUrl: (env("PROFIS_BASE_URL") ?? "https://serviziprofis.sisteminrete.com").replace(/\/+$/, ""),
     appId: required("PROFIS_APP_ID"),
