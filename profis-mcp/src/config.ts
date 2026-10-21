@@ -1,6 +1,8 @@
 // Configurazione letta da variabili d'ambiente (vedi .env.example).
 
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 export interface Config {
   baseUrl: string;
@@ -42,6 +44,15 @@ function hashed(plainVar: string, hashVar: string): string | undefined {
   if (hash) return hash;
   const plain = env(plainVar);
   return plain ? sha256Hex(plain) : undefined;
+}
+
+// Carica il file .env della cartella profis-mcp (o quello indicato in PROFIS_ENV_FILE).
+// Le variabili già impostate, ad esempio da claude_desktop_config.json, hanno la precedenza.
+export function loadEnvFile(): string | undefined {
+  const file = env("PROFIS_ENV_FILE") ?? fileURLToPath(new URL("../.env", import.meta.url));
+  if (!existsSync(file)) return undefined;
+  process.loadEnvFile(file);
+  return file;
 }
 
 export function loadConfig(): Config {

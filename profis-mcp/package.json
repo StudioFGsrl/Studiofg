@@ -27,7 +27,7 @@
     "profis-mcp": "dist/index.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.12"
   },
   "private": true
 }

@@ -7,7 +7,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import type { Request, Response, NextFunction } from "express";
-import { loadConfig, type Config } from "./config.js";
+import { loadConfig, loadEnvFile, type Config } from "./config.js";
 import { ProfisClient } from "./profis-client.js";
 import { registerTools } from "./tools.js";
 
@@ -34,6 +34,8 @@ function bearerAuth(expected: string) {
 }
 
 async function main(): Promise<void> {
+  const envFile = loadEnvFile();
+  if (envFile) console.error(`Configurazione letta da ${envFile}`);
   const cfg = loadConfig();
   const client = new ProfisClient(cfg);
 

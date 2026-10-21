@@ -46,22 +46,33 @@ npm run build
 npm test      # test contro un finto PROFIS locale
 ```
 
+## Configurazione: il file `.env`
+
+Il file `.env` **non è nel repository**, ed è voluto: contiene le password ed è escluso da git. Va creato sul PC dove gira il server, copiando il modello:
+
+```bash
+# Windows (prompt dei comandi, nella cartella profis-mcp)
+copy .env.example .env
+# macOS / Linux
+cp .env.example .env
+```
+
+Poi apri `.env` con il Blocco note e compila `PROFIS_APP_ID`, `PROFIS_USER`, `PROFIS_PASSWORD`, più eventuali dati del gruppo.
+All'avvio il server legge da solo `profis-mcp/.env`. Per usare un altro percorso, indicalo in `PROFIS_ENV_FILE`.
+Le variabili già impostate nell'ambiente, ad esempio nel blocco `env` di `claude_desktop_config.json`, hanno la precedenza sul file.
+
+In Esplora risorse di Windows i file che iniziano con il punto si vedono normalmente. Se il Blocco note salva `.env.txt`, scegli "Tutti i file" come tipo al momento del salvataggio.
+
 ## Uso con Claude Desktop (sul PC dello studio)
 
-In `claude_desktop_config.json`:
+In `claude_desktop_config.json`, con il `.env` già compilato:
 
 ```json
 {
   "mcpServers": {
     "profis": {
       "command": "node",
-      "args": ["C:\\percorso\\profis-mcp\\dist\\index.js"],
-      "env": {
-        "PROFIS_APP_ID": "...",
-        "PROFIS_USER": "...",
-        "PROFIS_PASSWORD": "...",
-        "PROFIS_DOWNLOAD_DIR": "C:\\Users\\nome\\Documents\\profis-download"
-      }
+      "args": ["C:\\percorso\\profis-mcp\\dist\\index.js"]
     }
   }
 }
@@ -70,7 +81,7 @@ In `claude_desktop_config.json`:
 ## Uso con Claude Code
 
 ```bash
-claude mcp add profis -e PROFIS_APP_ID=... -e PROFIS_USER=... -e PROFIS_PASSWORD=... -- node /percorso/profis-mcp/dist/index.js
+claude mcp add profis -- node /percorso/profis-mcp/dist/index.js
 ```
 
 ## Uso come connettore su claude.ai (HTTP)

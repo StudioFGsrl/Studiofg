@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -139,6 +139,21 @@ test("stdio: download come risorsa, su disco ed errore PROFIS", async () => {
   assert.match(saved.content[0].text, /File salvato/);
   assert.equal((await readFile(path.join(dir, "abc_f24.pdf"))).toString(), PDF.toString());
   await client2.close();
+});
+
+test("stdio: configurazione letta dal file .env", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "profis-env-"));
+  const file = path.join(dir, ".env");
+  await writeFile(file, `PROFIS_BASE_URL=${base}\nPROFIS_APP_ID=STUDIO\nPROFIS_USER=mario\nPROFIS_PASSWORD=pw\n`);
+  const { PROFIS_BASE_URL, PROFIS_APP_ID, PROFIS_USER, PROFIS_PASSWORD, ...pulito } = process.env;
+  const client = new Client({ name: "test", version: "0" });
+  clients.push(client);
+  await client.connect(
+    new StdioClientTransport({ command: "node", args: ["dist/index.js"], env: { ...pulito, PROFIS_ENV_FILE: file } }),
+  );
+  const r = await client.callTool({ name: "profis_anni", arguments: {} });
+  assert.ok(!r.isError, r.content[0].text);
+  await client.close();
 });
 
 test("stdio: credenziali errate", async () => {
