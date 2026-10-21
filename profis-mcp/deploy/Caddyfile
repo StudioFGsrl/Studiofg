@@ -1,0 +1,4 @@
+{$MCP_DOMAIN} {
+	# Nessun log degli accessi: l'URL del connettore contiene il token.
+	reverse_proxy profis-mcp:3000
+}

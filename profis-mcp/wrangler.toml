@@ -1,0 +1,15 @@
+# Cloudflare Workers: server MCP PROFIS sempre acceso, gratuito fino a 100.000 richieste al giorno.
+# I valori segreti (credenziali PROFIS e MCP_AUTH_TOKEN) si impostano come "Secrets" nella
+# dashboard di Cloudflare o con "npx wrangler secret put NOME": non vanno scritti qui.
+name = "profis-mcp"
+main = "src/worker.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Log degli errori attivi, ma senza i dati delle singole richieste: l'URL contiene il token.
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = false
