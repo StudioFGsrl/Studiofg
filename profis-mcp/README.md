@@ -84,46 +84,46 @@ In `claude_desktop_config.json`, con il `.env` già compilato:
 claude mcp add profis -- node /percorso/profis-mcp/dist/index.js
 ```
 
-## Pubblicazione sul dominio (es. `mcp.studiofg.it`)
+## Pubblicazione sul dominio (es. `mcp.studiofgsrl.it`)
 
 In modalità HTTP il server richiede due variabili:
 - **`MCP_AUTH_TOKEN`**: almeno 32 caratteri casuali. Si genera con `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
-- **`MCP_ALLOWED_HOSTS=mcp.studiofg.it`**: senza questa il server risponde 403 alle richieste che arrivano dal dominio.
+- **`MCP_ALLOWED_HOSTS=mcp.studiofgsrl.it`**: senza questa il server risponde 403 alle richieste che arrivano dal dominio.
 
-L'indirizzo da dare a Claude è **`https://mcp.studiofg.it/mcp/<MCP_AUTH_TOKEN>`**. Il token sta nell'URL perché i connettori personalizzati di claude.ai non permettono di aggiungere header. Va trattato come una password.
+L'indirizzo da dare a Claude è **`https://mcp.studiofgsrl.it/mcp/<MCP_AUTH_TOKEN>`**. Il token sta nell'URL perché i connettori personalizzati di claude.ai non permettono di aggiungere header. Va trattato come una password.
 
 ### A) Hosting condiviso con cPanel ("Setup Node.js App")
 
-1. **Sottodominio:** in cPanel → *Domini*, crea `mcp.studiofg.it` e attiva il certificato SSL (AutoSSL / Let's Encrypt).
+1. **Sottodominio:** in cPanel → *Domini*, crea `mcp.studiofgsrl.it` e attiva il certificato SSL (AutoSSL / Let's Encrypt).
 2. **File:** carica e decomprimi `profis-mcp-hosting.zip` in una cartella fuori da `public_html`, ad esempio `/home/<utente>/profis-mcp`. Lo zip contiene già il codice compilato.
 3. **App Node.js:** in cPanel → *Setup Node.js App* → *Create Application*:
    - Node.js version: **20.12 o superiore** (meglio 22)
    - Application mode: Production
    - Application root: `profis-mcp`
-   - Application URL: `mcp.studiofg.it`
+   - Application URL: `mcp.studiofgsrl.it`
    - Application startup file: **`app.cjs`**
 4. **Variabili** (*Environment variables* nella stessa pagina):
-   `MCP_TRANSPORT=http`, `MCP_AUTH_TOKEN=…`, `MCP_ALLOWED_HOSTS=mcp.studiofg.it`,
+   `MCP_TRANSPORT=http`, `MCP_AUTH_TOKEN=…`, `MCP_ALLOWED_HOSTS=mcp.studiofgsrl.it`,
    `PROFIS_APP_ID=…`, `PROFIS_USER=…`, `PROFIS_PASSWORD=…`, più gruppo se serve.
    In alternativa puoi creare il file `.env` nella cartella dell'app.
 5. Clicca **Run NPM Install**, poi **Restart**.
-6. **Verifica:** `https://mcp.studiofg.it/health` deve rispondere `{"ok":true}`.
+6. **Verifica:** `https://mcp.studiofgsrl.it/health` deve rispondere `{"ok":true}`.
 
 Se *Setup Node.js App* non c'è, l'hosting non esegue Node.js. In quel caso serve un VPS (soluzione B) o un servizio come Render o Railway, con il sottodominio `mcp` puntato lì.
 
 ### B) VPS con Docker
 
 ```bash
-cp .env.example .env      # compila credenziali, MCP_AUTH_TOKEN e MCP_DOMAIN=mcp.studiofg.it
+cp .env.example .env      # compila credenziali, MCP_AUTH_TOKEN e MCP_DOMAIN=mcp.studiofgsrl.it
 docker compose up -d --build
 ```
 
-Prima punta il record DNS `mcp.studiofg.it` all'IP del server. Caddy ottiene e rinnova da solo il certificato HTTPS.
+Prima punta il record DNS `mcp.studiofgsrl.it` all'IP del server. Caddy ottiene e rinnova da solo il certificato HTTPS.
 
 ### Collegarlo a Claude
 
-- **claude.ai / app Claude:** *Impostazioni → Connettori → Aggiungi connettore personalizzato*, URL `https://mcp.studiofg.it/mcp/<token>`.
-- **Claude Code:** `claude mcp add --transport http profis https://mcp.studiofg.it/mcp --header "Authorization: Bearer <token>"`.
+- **claude.ai / app Claude:** *Impostazioni → Connettori → Aggiungi connettore personalizzato*, URL `https://mcp.studiofgsrl.it/mcp/<token>`.
+- **Claude Code:** `claude mcp add --transport http profis https://mcp.studiofgsrl.it/mcp --header "Authorization: Bearer <token>"`.
 
 ## Nota: PROFIS ha anche un endpoint MCP nativo
 
