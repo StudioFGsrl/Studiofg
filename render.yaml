@@ -1,0 +1,38 @@
+# Blueprint Render per il server MCP PROFIS (cartella profis-mcp).
+# Su render.com: New → Blueprint → scegli questo repository. Le variabili con sync: false
+# vengono chieste alla creazione e non finiscono nel repository.
+services:
+  - type: web
+    name: profis-mcp
+    runtime: node
+    region: frankfurt
+    plan: starter
+    rootDir: profis-mcp
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    domains:
+      - mcp.studiofgsrl.it
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: MCP_TRANSPORT
+        value: http
+      - key: MCP_HTTP_HOST
+        value: 0.0.0.0
+      - key: MCP_ALLOWED_HOSTS
+        value: mcp.studiofgsrl.it,profis-mcp.onrender.com
+      # Almeno 32 caratteri tra lettere, cifre, - e _ (generateValue di Render può contenere + / =)
+      - key: MCP_AUTH_TOKEN
+        sync: false
+      - key: PROFIS_APP_ID
+        sync: false
+      - key: PROFIS_USER
+        sync: false
+      - key: PROFIS_PASSWORD
+        sync: false
+      - key: PROFIS_GRUPPO
+        sync: false
+      - key: PROFIS_GRUPPO_PWD
+        sync: false

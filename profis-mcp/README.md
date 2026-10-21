@@ -92,6 +92,23 @@ In modalità HTTP il server richiede due variabili:
 
 L'indirizzo da dare a Claude è **`https://mcp.studiofgsrl.it/mcp/<MCP_AUTH_TOKEN>`**. Il token sta nell'URL perché i connettori personalizzati di claude.ai non permettono di aggiungere header. Va trattato come una password.
 
+### Consigliato: Render + DNS su Register.it
+
+Il dominio `studiofgsrl.it` è su Register.it con hosting WordPress, che non esegue Node.js. Il server gira quindi su [Render](https://render.com) e da Register.it si punta lì solo il sottodominio `mcp`. Il sito WordPress non cambia.
+
+1. **Token:** generalo sul PC con
+   `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
+   (oppure con qualsiasi generatore di password, purché usi solo lettere, cifre, `-` e `_`, con almeno 32 caratteri).
+2. **Render:** crea un account → *New* → *Blueprint* → collega il repository GitHub `studiofgsrl/studiofg`. Render legge `render.yaml` dalla radice del repository e chiede i valori segreti: `MCP_AUTH_TOKEN`, `PROFIS_APP_ID`, `PROFIS_USER`, `PROFIS_PASSWORD`, più il gruppo se serve (altrimenti lascia vuoto).
+   Piano **Starter** (circa 7 $/mese): quello gratuito si spegne dopo un periodo di inattività e Claude andrebbe in timeout.
+3. **Verifica:** `https://profis-mcp.onrender.com/health` deve rispondere `{"ok":true}`.
+4. **DNS su Register.it:** *Dominio & DNS* → gestione DNS di `studiofgsrl.it` → aggiungi un record **CNAME** con nome `mcp` e valore `profis-mcp.onrender.com`.
+   Poi in Render → *Settings* → *Custom Domains* attendi la verifica: il certificato HTTPS lo crea Render.
+5. **Verifica finale:** `https://mcp.studiofgsrl.it/health`.
+6. **Indirizzo IP per Sistemi:** se PROFIS accetta solo IP abilitati, in Render → *Connect* → *Outbound* trovi gli IP in uscita da comunicare a Sistemi.
+
+Se Render assegna un nome diverso da `profis-mcp.onrender.com` (succede quando è già occupato), usa quello nel CNAME e aggiornalo in `MCP_ALLOWED_HOSTS`.
+
 ### A) Hosting condiviso con cPanel ("Setup Node.js App")
 
 1. **Sottodominio:** in cPanel → *Domini*, crea `mcp.studiofgsrl.it` e attiva il certificato SSL (AutoSSL / Let's Encrypt).
