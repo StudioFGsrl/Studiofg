@@ -65,7 +65,7 @@ export function loadConfig(): Config {
     baseUrl: required("PROFIS_BASE_URL").replace(/\/+$/, ""),
     authMode,
     token: env("PROFIS_TOKEN"),
-    apiKeyHeader: env("PROFIS_API_KEY_HEADER") ?? "X-Api-Key",
+    apiKeyHeader: env("PROFIS_API_KEY_HEADER") ?? "X-BC-GruppoPwd",
     apiKey: env("PROFIS_API_KEY"),
     username: env("PROFIS_USERNAME"),
     password: env("PROFIS_PASSWORD"),
