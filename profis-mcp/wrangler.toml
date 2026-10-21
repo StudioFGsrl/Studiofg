@@ -6,6 +6,8 @@ main = "src/worker.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
+# Non cancellare le variabili impostate dalla dashboard a ogni deploy da GitHub.
+keep_vars = true
 
 # Log degli errori attivi, ma senza i dati delle singole richieste: l'URL contiene il token.
 [observability]
