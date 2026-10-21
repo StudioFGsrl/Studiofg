@@ -56,7 +56,8 @@ async function main(): Promise<void> {
   // Modalità stateless: un server e un transport nuovi per ogni richiesta.
   app.post(["/mcp", "/mcp/:token"], tokenAuth(cfg.mcpAuthToken!), async (req, res) => {
     const server = buildServer(cfg, client);
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    // Risposte JSON semplici invece di stream SSE: passano meglio dai proxy degli hosting condivisi.
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on("close", () => {
       void transport.close();
       void server.close();

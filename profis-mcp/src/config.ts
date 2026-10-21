@@ -70,7 +70,8 @@ export function loadConfig(): Config {
     maxResponseChars: Number(env("PROFIS_MAX_RESPONSE_CHARS") ?? 100000),
     transport: (env("MCP_TRANSPORT") ?? "stdio") === "http" ? "http" : "stdio",
     httpHost: env("MCP_HTTP_HOST") ?? "127.0.0.1",
-    httpPort: Number(env("MCP_HTTP_PORT") ?? 3000),
+    // PORT è la variabile usata da molte piattaforme di hosting (Render, Railway, Passenger...).
+    httpPort: Number(env("MCP_HTTP_PORT") ?? env("PORT") ?? 3000),
     mcpAuthToken: env("MCP_AUTH_TOKEN"),
     allowedHosts: env("MCP_ALLOWED_HOSTS")?.split(",").map((h) => h.trim()),
   };
