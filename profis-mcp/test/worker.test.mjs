@@ -62,7 +62,7 @@ test("worker: token, elenco strumenti, chiamata e download", async () => {
   const client = new Client({ name: "test", version: "0" });
   await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/mcp/${MCP_TOKEN}`)));
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 14);
+  assert.equal(tools.length, 15);
 
   const r = await client.callTool({
     name: "profis_documenti_cerca",

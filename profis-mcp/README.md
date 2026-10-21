@@ -17,6 +17,7 @@ Server MCP che collega Claude a **PROFIS (Sistemi) su SISTEMINRETE**, in sola le
 | `profis_annotazioni_cerca` / `profis_annotazione_leggi` | `GD_ANNOTAZIONI/LeggiElenco`, `Leggi` |
 | `profis_report_info` / `profis_report_esegui` | `report/Info/{name}`, `report/RunReport/{name}`: qualsiasi report con il flag "Abilita per il Web" |
 | `profis_anni` / `profis_gruppi` | `System/GetAnni`, `System/GetGruppi` |
+| `profis_diagnostica` | configurazione del server e risposta completa di PROFIS (status, intestazioni, corpo) per alcune chiamate di prova, con gruppo o `X-BC-Anno` a scelta |
 
 I servizi di scrittura (`Archivia`, `Aggiorna`, `Inserisci`, `Elimina`, upload) esistono in PROFIS ma volutamente **non** sono esposti.
 
