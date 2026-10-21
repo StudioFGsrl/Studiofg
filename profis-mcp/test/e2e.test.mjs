@@ -11,6 +11,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
+const MCP_TOKEN = "t".repeat(40);
 const PWD_HASH = createHash("sha256").update("pw").digest("hex");
 const PDF = Buffer.from("%PDF-1.4 finto");
 let mock;
@@ -167,7 +168,7 @@ test("stdio: credenziali errate", async () => {
 test("http: token MCP obbligatorio", async () => {
   const port = 39000 + Math.floor(Math.random() * 1000);
   const proc = spawn("node", ["dist/index.js"], {
-    env: env({ MCP_TRANSPORT: "http", MCP_HTTP_PORT: String(port), MCP_AUTH_TOKEN: "tok-mcp" }),
+    env: env({ MCP_TRANSPORT: "http", MCP_HTTP_PORT: String(port), MCP_AUTH_TOKEN: MCP_TOKEN }),
     stdio: ["ignore", "ignore", "pipe"],
   });
   await new Promise((r) => proc.stderr.on("data", (d) => String(d).includes("in ascolto") && r()));
@@ -178,11 +179,23 @@ test("http: token MCP obbligatorio", async () => {
 
     const client = new Client({ name: "test", version: "0" });
     await client.connect(
-      new StreamableHTTPClientTransport(url, { requestInit: { headers: { Authorization: "Bearer tok-mcp" } } }),
+      new StreamableHTTPClientTransport(url, { requestInit: { headers: { Authorization: `Bearer ${MCP_TOKEN}` } } }),
     );
     const r = await client.callTool({ name: "profis_annotazioni_cerca", arguments: { GuidUnivoco: "abc" } });
     assert.ok(!r.isError, r.content[0].text);
     await client.close();
+
+    // Token nell'URL, come lo usa un connettore personalizzato di claude.ai.
+    const wrong = await fetch(new URL(`/mcp/${"x".repeat(40)}`, url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(wrong.status, 401);
+    const viaPath = new Client({ name: "test", version: "0" });
+    await viaPath.connect(new StreamableHTTPClientTransport(new URL(`/mcp/${MCP_TOKEN}`, url)));
+    assert.equal((await viaPath.listTools()).tools.length, 14);
+    await viaPath.close();
   } finally {
     proc.kill();
   }

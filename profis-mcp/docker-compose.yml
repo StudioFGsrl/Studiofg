@@ -1,0 +1,31 @@
+# Avvio su un server (VPS) con il dominio già puntato al suo IP:
+#   cp .env.example .env   # compila credenziali PROFIS, MCP_AUTH_TOKEN e MCP_DOMAIN
+#   docker compose up -d --build
+# Caddy ottiene e rinnova da solo il certificato HTTPS.
+services:
+  profis-mcp:
+    build: .
+    env_file: .env
+    environment:
+      MCP_TRANSPORT: http
+      MCP_HTTP_HOST: 0.0.0.0
+      MCP_HTTP_PORT: "3000"
+      MCP_ALLOWED_HOSTS: ${MCP_DOMAIN}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.10-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      MCP_DOMAIN: ${MCP_DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - profis-mcp
+    restart: unless-stopped
+
+volumes:
+  caddy_data:

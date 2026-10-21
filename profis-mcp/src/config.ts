@@ -83,6 +83,10 @@ export function loadConfig(): Config {
   if (cfg.transport === "http" && !cfg.mcpAuthToken) {
     throw new Error("MCP_AUTH_TOKEN obbligatorio con MCP_TRANSPORT=http");
   }
+  // Il token può finire nell'URL: deve essere lungo e casuale, e senza caratteri da codificare.
+  if (cfg.mcpAuthToken && !/^[A-Za-z0-9_-]{32,}$/.test(cfg.mcpAuthToken)) {
+    throw new Error("MCP_AUTH_TOKEN deve avere almeno 32 caratteri tra lettere, cifre, - e _");
+  }
 
   return cfg;
 }

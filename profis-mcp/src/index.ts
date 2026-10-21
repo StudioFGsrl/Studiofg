@@ -21,10 +21,13 @@ function buildServer(cfg: Config, client: ProfisClient): McpServer {
   return server;
 }
 
-function bearerAuth(expected: string) {
+// Il token si può passare come "Authorization: Bearer ..." oppure nell'URL (/mcp/<token>):
+// i connettori personalizzati di claude.ai non permettono header propri, quindi serve la seconda forma.
+function tokenAuth(expected: string) {
   const want = Buffer.from(expected);
   return (req: Request, res: Response, next: NextFunction) => {
-    const got = Buffer.from((req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
+    const fromPath = typeof req.params.token === "string" ? req.params.token : undefined;
+    const got = Buffer.from(fromPath ?? (req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
     if (got.length !== want.length || !timingSafeEqual(got, want)) {
       res.status(401).json({ error: "unauthorized" });
       return;
@@ -51,7 +54,7 @@ async function main(): Promise<void> {
   });
 
   // Modalità stateless: un server e un transport nuovi per ogni richiesta.
-  app.post("/mcp", bearerAuth(cfg.mcpAuthToken!), async (req, res) => {
+  app.post(["/mcp", "/mcp/:token"], tokenAuth(cfg.mcpAuthToken!), async (req, res) => {
     const server = buildServer(cfg, client);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on("close", () => {
@@ -71,8 +74,8 @@ async function main(): Promise<void> {
   const methodNotAllowed = (_req: Request, res: Response) => {
     res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Metodo non consentito" }, id: null });
   };
-  app.get("/mcp", methodNotAllowed);
-  app.delete("/mcp", methodNotAllowed);
+  app.get(["/mcp", "/mcp/:token"], methodNotAllowed);
+  app.delete(["/mcp", "/mcp/:token"], methodNotAllowed);
 
   app.listen(cfg.httpPort, cfg.httpHost, () => {
     console.error(`profis-mcp in ascolto su http://${cfg.httpHost}:${cfg.httpPort}/mcp`);
