@@ -383,6 +383,80 @@ export function registerTools(
     async () => call("GET", client.appPath("System", "GetAnni")),
   );
 
+  // --- Diagnosi ---
+
+  server.registerTool(
+    "profis_diagnostica",
+    {
+      title: "Diagnostica connessione PROFIS",
+      description:
+        "Mostra la configurazione del server (senza password) e la risposta completa di PROFIS, con status e " +
+        "intestazioni, per alcune chiamate di prova. Permette di provare un altro gruppo o di aggiungere X-BC-Anno. " +
+        "Da usare quando gli altri strumenti danno errore.",
+      inputSchema: {
+        Gruppo: z
+          .string()
+          .optional()
+          .describe("Gruppo da usare al posto di quello configurato; stringa vuota per provare senza gruppo"),
+        Anno: z.number().int().optional().describe("Se indicato, aggiunge l'header X-BC-Anno"),
+      },
+      annotations: readOnly,
+    },
+    async ({ Gruppo, Anno }) => {
+      const headers: Record<string, string | undefined> = {};
+      if (Gruppo !== undefined) {
+        headers["X-BC-Gruppo"] = Gruppo === "" ? undefined : Gruppo;
+        if (Gruppo === "") headers["X-BC-GruppoPwd"] = undefined;
+      }
+      if (Anno !== undefined) headers["X-BC-Anno"] = String(Anno);
+
+      const oggi = new Date();
+      const settimanaFa = new Date(oggi.getTime() - 7 * GIORNO_MS);
+      const giorno = (d: Date) => `${d.toISOString().slice(0, 10)}T00:00:00`;
+      const prove: [string, "GET" | "POST", string, unknown][] = [
+        ["Gruppi (di sistema)", "GET", client.appPath("System", "GetGruppi"), undefined],
+        [
+          "Ditte con documenti variati (ultimi 7 giorni)",
+          "POST",
+          gd("GD_DOCUMENTI", "LeggiDitteDocVariati"),
+          { Parametri: { VariazioneDataDa: giorno(settimanaFa), VariazioneDataA: giorno(oggi) } },
+        ],
+        [
+          "Lettura documento inesistente",
+          "POST",
+          gd("GD_DOCUMENTI", "LeggiDaGuid"),
+          { GuidUnivoco: "00000000-0000-0000-0000-000000000000" },
+        ],
+      ];
+
+      const righe = [
+        "Configurazione:",
+        `- URL: ${cfg.baseUrl}`,
+        `- AppId: ${cfg.appId === "Sistemi" ? "Sistemi" : `chiave SIR (${cfg.appId.length} caratteri)`}`,
+        `- Utente: ${cfg.user ?? "(token statico)"}`,
+        `- Gruppo configurato: ${cfg.gruppo ?? "nessuno"}${cfg.gruppoPwdSha256 ? " (con password)" : ""}`,
+        `- Header di prova: ${JSON.stringify(headers)}`,
+        "",
+      ];
+      for (const [nome, method, p, body] of prove) {
+        try {
+          const r = await client.raw(method, p, body, headers);
+          righe.push(
+            `## ${nome}`,
+            `${method} ${p}`,
+            `Status: ${r.status} ${r.statusText}`,
+            `Intestazioni: ${JSON.stringify(r.headers)}`,
+            `Corpo: ${r.body || "(vuoto)"}`,
+            "",
+          );
+        } catch (err) {
+          righe.push(`## ${nome}`, `Errore: ${(err as Error).message}`, "");
+        }
+      }
+      return text(righe.join("\n"));
+    },
+  );
+
   server.registerTool(
     "profis_gruppi",
     {

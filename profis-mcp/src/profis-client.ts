@@ -56,10 +56,37 @@ export class ProfisClient {
     return token;
   }
 
-  private async send(method: Method, path: string, body: unknown, token: string): Promise<Response> {
+  /** Esegue una chiamata e restituisce la risposta grezza, anche se è un errore. Serve alla diagnosi. */
+  async raw(
+    method: Method,
+    path: string,
+    body?: unknown,
+    extraHeaders: Record<string, string | undefined> = {},
+  ): Promise<{ status: number; statusText: string; headers: Record<string, string>; body: string }> {
+    const res = await this.send(method, path, body, await this.getToken(), extraHeaders);
+    return {
+      status: res.status,
+      statusText: res.statusText,
+      headers: Object.fromEntries([...res.headers].filter(([k]) => k !== "set-cookie")),
+      body: (await res.text()).slice(0, 4000),
+    };
+  }
+
+  // In extraHeaders un valore undefined toglie l'header: così la diagnosi può provare senza gruppo.
+  private async send(
+    method: Method,
+    path: string,
+    body: unknown,
+    token: string,
+    extraHeaders: Record<string, string | undefined> = {},
+  ): Promise<Response> {
     const headers: Record<string, string> = { Accept: "application/json", "X-BC-Authorization": token };
     if (this.cfg.gruppo) headers["X-BC-Gruppo"] = this.cfg.gruppo;
     if (this.cfg.gruppoPwdSha256) headers["X-BC-GruppoPwd"] = this.cfg.gruppoPwdSha256;
+    for (const [k, v] of Object.entries(extraHeaders)) {
+      if (v === undefined) delete headers[k];
+      else headers[k] = v;
+    }
     if (body !== undefined) headers["Content-Type"] = "application/json";
     return this.fetch(this.cfg.baseUrl + path, {
       method,

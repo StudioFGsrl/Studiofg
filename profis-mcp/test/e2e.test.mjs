@@ -75,7 +75,7 @@ async function stdioClient(extra) {
 test("stdio: login, ricerca, header e validazione", async () => {
   const client = await stdioClient();
   const { tools } = await client.listTools();
-  assert.equal(tools.length, 14);
+  assert.equal(tools.length, 15);
   assert.ok(tools.every((t) => t.annotations?.readOnlyHint === true));
 
   const ok = await client.callTool({
@@ -103,6 +103,14 @@ test("stdio: login, ricerca, header e validazione", async () => {
   await client.callTool({ name: "profis_report_esegui", arguments: { name: "Elenco ditte" } });
   assert.equal(calls.at(-1).url, "/report/App-STUDIO/RunReport/Elenco%20ditte");
   assert.deepEqual(calls.at(-1).body, { Skip: 0, Take: 100 });
+
+  const diag = await client.callTool({ name: "profis_diagnostica", arguments: { Gruppo: "", Anno: 2026 } });
+  assert.ok(!diag.isError, diag.content[0].text);
+  assert.match(diag.content[0].text, /Gruppo configurato: G1/);
+  assert.match(diag.content[0].text, /Status: 200/);
+  assert.equal(calls.at(-1).url, "/api/GD_DOCUMENTI/App-STUDIO/LeggiDaGuid");
+  assert.equal(calls.at(-1).headers["x-bc-gruppo"], undefined);
+  assert.equal(calls.at(-1).headers["x-bc-anno"], "2026");
 
   await client.callTool({ name: "profis_anni", arguments: {} });
   assert.equal(calls.at(-1).method, "GET");
@@ -194,7 +202,7 @@ test("http: token MCP obbligatorio", async () => {
     assert.equal(wrong.status, 401);
     const viaPath = new Client({ name: "test", version: "0" });
     await viaPath.connect(new StreamableHTTPClientTransport(new URL(`/mcp/${MCP_TOKEN}`, url)));
-    assert.equal((await viaPath.listTools()).tools.length, 14);
+    assert.equal((await viaPath.listTools()).tools.length, 15);
     await viaPath.close();
   } finally {
     proc.kill();
