@@ -98,6 +98,23 @@ interface DownloadOut {
 /** Salva un file scaricato e restituisce dove è finito (solo su Node, con PROFIS_DOWNLOAD_DIR). */
 export type SaveFile = (nome: string, bytes: Uint8Array) => Promise<string>;
 
+// PROFIS a volte restituisce il nome del file originale anche quando il contenuto è un altro formato
+// (es. TipoFile 5: PDF generato da una fattura, ma NomeFile resta .xml). Il tipo vero si legge dai primi byte.
+const FIRME: [string, string][] = [
+  ["%PDF-", ".pdf"],
+  ["\x89PNG", ".png"],
+  ["\xff\xd8\xff", ".jpg"],
+];
+
+export function estensioneReale(bytes: Uint8Array): string | undefined {
+  const inizio = String.fromCharCode(...bytes.subarray(0, 8));
+  for (const [firma, ext] of FIRME) if (inizio.startsWith(firma)) return ext;
+  const testo = new TextDecoder().decode(bytes.subarray(0, 200)).replace(/^\uFEFF/, "").trimStart().toLowerCase();
+  if (testo.startsWith("<!doctype html") || testo.startsWith("<html")) return ".html";
+  if (testo.startsWith("<?xml")) return ".xml";
+  return undefined;
+}
+
 const estensione = (nome: string) => {
   const i = nome.lastIndexOf(".");
   return i > 0 ? nome.slice(i).toLowerCase() : "";
@@ -147,8 +164,13 @@ export function registerTools(
       return text(`Download non riuscito${msg ? `: ${msg}` : ""}\n${JSON.stringify(data?.Esito ?? data)}`, true);
     }
 
-    const nome = (data.NomeFile || "documento").split(/[\\/]/).pop()!.replace(/[^\w.\- ]/g, "_");
+    let nome = (data.NomeFile || "documento").split(/[\\/]/).pop()!.replace(/[^\w.\- ]/g, "_");
     const bytes = Buffer.from(buffer, "base64");
+    const reale = estensioneReale(bytes);
+    if (reale && estensione(nome) !== reale && !(reale === ".jpg" && estensione(nome) === ".jpeg")) {
+      const i = nome.lastIndexOf(".");
+      nome = (i > 0 ? nome.slice(0, i) : nome) + reale;
+    }
     const mimeType = MIME[estensione(nome)] ?? "application/octet-stream";
 
     if (saveFile) {
