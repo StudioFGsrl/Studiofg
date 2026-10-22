@@ -116,6 +116,7 @@ test("stdio: login, ricerca, header e validazione", async () => {
   const diag = await client.callTool({ name: "profis_diagnostica", arguments: { Gruppo: "", Anno: 2026 } });
   assert.ok(!diag.isError, diag.content[0].text);
   assert.match(diag.content[0].text, /Gruppo configurato: G1/);
+  assert.match(diag.content[0].text, /Invio email: non attivo/);
   assert.match(diag.content[0].text, /Status: 200/);
   assert.equal(calls.at(-1).url, "/api/GD_DOCUMENTI/App-STUDIO/LeggiDaGuid");
   assert.equal(calls.at(-1).headers["x-bc-gruppo"], undefined);
@@ -175,6 +176,8 @@ test("stdio: invio documenti per email solo verso destinatari ammessi", async ()
     EMAIL_DESTINATARI_AMMESSI: "Fabio@studio.it, @clienti.it",
   });
   assert.equal((await client.listTools()).tools.length, 16);
+  const diag = await client.callTool({ name: "profis_diagnostica", arguments: {} });
+  assert.match(diag.content[0].text, /Invio email: attivo, da PROFIS <profis@studio\.it> verso fabio@studio\.it, @clienti\.it/);
 
   const vietato = await client.callTool({
     name: "profis_documento_invia_email",

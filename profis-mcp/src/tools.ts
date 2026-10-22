@@ -565,6 +565,11 @@ export function registerTools(
         `- AppId: ${cfg.appId === "Sistemi" ? "Sistemi" : `chiave SIR (${cfg.appId.length} caratteri)`}`,
         `- Utente: ${cfg.user ?? "(token statico)"}`,
         `- Gruppo configurato: ${cfg.gruppo ?? "nessuno"}${cfg.gruppoPwdSha256 ? " (con password)" : ""}`,
+        `- Invio email: ${
+          cfg.email
+            ? `attivo, da ${cfg.email.mittente} verso ${cfg.email.destinatariAmmessi.join(", ")}`
+            : "non attivo (servono RESEND_API_KEY, EMAIL_MITTENTE ed EMAIL_DESTINATARI_AMMESSI)"
+        }`,
         `- Header di prova: ${JSON.stringify(headers)}`,
         "",
       ];
