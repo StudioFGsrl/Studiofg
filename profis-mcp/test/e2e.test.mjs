@@ -37,6 +37,10 @@ before(async () => {
         return send(200, validToken);
       }
       if (req.headers["x-bc-authorization"] !== validToken) return send(401, "token non valido");
+      if (req.url === "/api/GD_DOCUMENTI/App-STUDIO/DownloadFile" && json.TipoFile === 5) {
+        // Come il PROFIS reale: PDF generato dalla fattura, ma con il nome del file XML originale.
+        return send(200, { Esito: { Esito: 1 }, NomeFile: "IT0123_000SB.xml", FileStream: { BUFFER: PDF.toString("base64") } });
+      }
       if (req.url === "/api/GD_DOCUMENTI/App-STUDIO/DownloadFile") {
         return send(200, { Esito: { Esito: 1 }, NomeFile: "f24.pdf", FileStream: { BUFFER: PDF.toString("base64") } });
       }
@@ -133,6 +137,10 @@ test("stdio: download come risorsa, su disco ed errore PROFIS", async () => {
   assert.ok(!r.isError, r.content[0].text);
   assert.equal(r.content[1].resource.mimeType, "application/pdf");
   assert.equal(Buffer.from(r.content[1].resource.blob, "base64").toString(), PDF.toString());
+
+  const pdf = await client.callTool({ name: "profis_documento_scarica", arguments: { GuidUnivoco: "abc", TipoFile: 5 } });
+  assert.match(pdf.content[0].text, /IT0123_000SB\.pdf \(application\/pdf/);
+  assert.equal(pdf.content[1].resource.mimeType, "application/pdf");
 
   const ko = await client.callTool({
     name: "profis_allegato_scarica",
