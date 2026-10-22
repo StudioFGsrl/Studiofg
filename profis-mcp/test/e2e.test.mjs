@@ -36,6 +36,11 @@ before(async () => {
         validToken = `tok-${++tokenCounter}`;
         return send(200, validToken);
       }
+      if (req.url === "/emails") {
+        // Finto Resend.
+        if (req.headers.authorization !== "Bearer re_test") return send(401, { message: "API key non valida" });
+        return send(200, { id: "email-1" });
+      }
       if (req.headers["x-bc-authorization"] !== validToken) return send(401, "token non valido");
       if (req.url === "/api/GD_DOCUMENTI/App-STUDIO/DownloadFile" && json.TipoFile === 5) {
         // Come il PROFIS reale: PDF generato dalla fattura, ma con il nome del file XML originale.
@@ -156,6 +161,48 @@ test("stdio: download come risorsa, su disco ed errore PROFIS", async () => {
   assert.match(saved.content[0].text, /File salvato/);
   assert.equal((await readFile(path.join(dir, "abc_F24.pdf"))).toString(), PDF.toString());
   await client2.close();
+});
+
+test("stdio: invio documenti per email solo verso destinatari ammessi", async () => {
+  const senza = await stdioClient();
+  assert.ok(!(await senza.listTools()).tools.some((t) => t.name === "profis_documento_invia_email"));
+  await senza.close();
+
+  const client = await stdioClient({
+    RESEND_API_KEY: "re_test",
+    RESEND_API_URL: base,
+    EMAIL_MITTENTE: "PROFIS <profis@studio.it>",
+    EMAIL_DESTINATARI_AMMESSI: "Fabio@studio.it, @clienti.it",
+  });
+  assert.equal((await client.listTools()).tools.length, 16);
+
+  const vietato = await client.callTool({
+    name: "profis_documento_invia_email",
+    arguments: { A: ["altro@esterno.com"], Oggetto: "Bilancio", Documenti: [{ GuidUnivoco: "abc" }] },
+  });
+  assert.equal(vietato.isError, true);
+  assert.match(vietato.content[0].text, /non ammessi: altro@esterno\.com/);
+  assert.ok(!calls.some((c) => c.url === "/emails"));
+
+  const ok = await client.callTool({
+    name: "profis_documento_invia_email",
+    arguments: {
+      A: ["fabio@studio.it", "mario@clienti.it"],
+      Oggetto: "Bilancio",
+      Documenti: [{ GuidUnivoco: "abc" }, { GuidUnivoco: "abc", TipoFile: 5 }],
+    },
+  });
+  assert.ok(!ok.isError, ok.content[0].text);
+  assert.match(ok.content[0].text, /Email inviata.*email-1/);
+  const mail = calls.find((c) => c.url === "/emails").body;
+  assert.equal(mail.from, "PROFIS <profis@studio.it>");
+  assert.deepEqual(mail.to, ["fabio@studio.it", "mario@clienti.it"]);
+  assert.deepEqual(
+    mail.attachments.map((a) => [a.filename, a.content_type]),
+    [["F24.pdf", "application/pdf"], ["IT0123_000SB.pdf", "application/pdf"]],
+  );
+  assert.equal(Buffer.from(mail.attachments[0].content, "base64").toString(), PDF.toString());
+  await client.close();
 });
 
 test("stdio: configurazione letta dal file .env", async () => {
