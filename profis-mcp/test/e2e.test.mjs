@@ -42,7 +42,7 @@ before(async () => {
         return send(200, { Esito: { Esito: 1 }, NomeFile: "IT0123_000SB.xml", FileStream: { BUFFER: PDF.toString("base64") } });
       }
       if (req.url === "/api/GD_DOCUMENTI/App-STUDIO/DownloadFile") {
-        return send(200, { Esito: { Esito: 1 }, NomeFile: "f24.pdf", FileStream: { BUFFER: PDF.toString("base64") } });
+        return send(200, { Esito: { Esito: 1 }, NomeFile: "F24.PDF", FileStream: { BUFFER: PDF.toString("base64") } });
       }
       if (req.url === "/api/GD_ALLEGATI/App-STUDIO/Download") {
         return send(200, { Esito: { Esito: 2, Errori: [{ Codice: 7, Messaggio: "Allegato inesistente" }] } });
@@ -154,7 +154,7 @@ test("stdio: download come risorsa, su disco ed errore PROFIS", async () => {
   const client2 = await stdioClient({ PROFIS_DOWNLOAD_DIR: dir });
   const saved = await client2.callTool({ name: "profis_documento_scarica", arguments: { GuidUnivoco: "abc" } });
   assert.match(saved.content[0].text, /File salvato/);
-  assert.equal((await readFile(path.join(dir, "abc_f24.pdf"))).toString(), PDF.toString());
+  assert.equal((await readFile(path.join(dir, "abc_F24.pdf"))).toString(), PDF.toString());
   await client2.close();
 });
 

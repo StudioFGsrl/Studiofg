@@ -171,6 +171,9 @@ export function registerTools(
       const i = nome.lastIndexOf(".");
       nome = (i > 0 ? nome.slice(0, i) : nome) + reale;
     }
+    // Alcuni client (es. la chat claude.ai) non riconoscono estensioni maiuscole come ".PDF".
+    const ext = estensione(nome);
+    if (ext) nome = nome.slice(0, nome.length - ext.length) + ext;
     const mimeType = MIME[estensione(nome)] ?? "application/octet-stream";
 
     if (saveFile) {
