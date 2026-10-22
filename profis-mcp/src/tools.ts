@@ -1,10 +1,11 @@
-// Strumenti MCP esposti a Claude. Tutti in sola lettura: le API di scrittura (Archivia, Aggiorna,
-// Inserisci, Elimina) esistono in PROFIS ma volutamente non sono esposte.
+// Strumenti MCP esposti a Claude. Su PROFIS sono tutti in sola lettura: le API di scrittura (Archivia, Aggiorna,
+// Inserisci, Elimina) esistono ma volutamente non sono esposte. L'unico strumento che agisce verso l'esterno è
+// l'invio dei documenti per email, attivo solo se configurato e limitato ai destinatari ammessi.
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import type { Config } from "./config.js";
+import type { Config, EmailConfig } from "./config.js";
 import { ProfisClient, ProfisError } from "./profis-client.js";
 
 const guid = z.string().min(1).describe("GuidUnivoco del documento PROFIS");
@@ -120,6 +121,30 @@ const estensione = (nome: string) => {
   return i > 0 ? nome.slice(i).toLowerCase() : "";
 };
 
+export function destinatarioAmmesso(indirizzo: string, email: EmailConfig): boolean {
+  const a = indirizzo.trim().toLowerCase();
+  return email.destinatariAmmessi.some((d) => (d.startsWith("@") ? a.endsWith(d) : a === d));
+}
+
+interface Messaggio {
+  to: string[];
+  subject: string;
+  text: string;
+  attachments: { filename: string; content: string; content_type: string }[];
+}
+
+/** Invia la mail con l'API di Resend e restituisce l'id del messaggio. */
+async function inviaEmail(email: EmailConfig, msg: Messaggio): Promise<string> {
+  const res = await fetch(`${email.apiUrl}/emails`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${email.apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: email.mittente, ...msg }),
+  });
+  const body = await res.text();
+  if (!res.ok) throw new Error(`Resend ${res.status}: ${body.slice(0, 500)}`);
+  return (JSON.parse(body) as { id?: string }).id ?? "?";
+}
+
 export function registerTools(
   server: McpServer,
   cfg: Config,
@@ -151,7 +176,15 @@ export function registerTools(
     }
   };
 
-  const download = async (p: string, body: Record<string, unknown>, guidDoc: string): Promise<CallToolResult> => {
+  interface FileScaricato {
+    nome: string;
+    mimeType: string;
+    bytes: Uint8Array;
+    buffer: string;
+  }
+
+  /** Scarica un file da PROFIS e ne ricava nome e tipo reali; in caso di errore restituisce il risultato da mostrare. */
+  const scaricaFile = async (p: string, body: Record<string, unknown>): Promise<FileScaricato | CallToolResult> => {
     let data: DownloadOut;
     try {
       data = (await client.request("POST", p, body)) as DownloadOut;
@@ -175,6 +208,13 @@ export function registerTools(
     const ext = estensione(nome);
     if (ext) nome = nome.slice(0, nome.length - ext.length) + ext;
     const mimeType = MIME[estensione(nome)] ?? "application/octet-stream";
+    return { nome, mimeType, bytes, buffer };
+  };
+
+  const download = async (p: string, body: Record<string, unknown>, guidDoc: string): Promise<CallToolResult> => {
+    const file = await scaricaFile(p, body);
+    if ("content" in file) return file;
+    const { nome, mimeType, bytes, buffer } = file;
 
     if (saveFile) {
       const dest = await saveFile(`${guidDoc.replace(/[^\w-]/g, "_")}_${nome}`, bytes);
@@ -407,6 +447,71 @@ export function registerTools(
     },
     async () => call("GET", client.appPath("System", "GetAnni")),
   );
+
+  // --- Invio per email (solo se configurato) ---
+
+  if (cfg.email) {
+    const email = cfg.email;
+    server.registerTool(
+      "profis_documento_invia_email",
+      {
+        title: "Invia documenti per email",
+        description:
+          "Scarica uno o più documenti da PROFIS e li invia per email come allegati, direttamente dal server. " +
+          `Destinatari ammessi: ${email.destinatariAmmessi.join(", ")}. ` +
+          "Per i TipoFile vedi profis_documento_scarica. Prima di inviare conferma con l'utente destinatari e documenti.",
+        inputSchema: {
+          A: z.array(z.string().email()).min(1).max(10).describe("Indirizzi email dei destinatari"),
+          Oggetto: z.string().min(1).max(200).describe("Oggetto della mail"),
+          Testo: z.string().max(10000).optional().describe("Testo della mail"),
+          Documenti: z
+            .array(
+              z.object({
+                GuidUnivoco: guid,
+                TipoFile: z.number().int().min(0).max(5).default(0).describe("Versione del file da allegare"),
+              }),
+            )
+            .min(1)
+            .max(10)
+            .describe("Documenti da allegare"),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      },
+      async ({ A, Oggetto, Testo, Documenti }) => {
+        const vietati = A.filter((a) => !destinatarioAmmesso(a, email));
+        if (vietati.length) {
+          return text(
+            `Destinatari non ammessi: ${vietati.join(", ")}. Sono ammessi solo: ${email.destinatariAmmessi.join(", ")}.`,
+            true,
+          );
+        }
+        const allegati: FileScaricato[] = [];
+        for (const d of Documenti) {
+          const file = await scaricaFile(gd("GD_DOCUMENTI", "DownloadFile"), d);
+          if ("content" in file) return file;
+          allegati.push(file);
+        }
+        const totale = allegati.reduce((n, f) => n + f.bytes.length, 0);
+        if (totale > cfg.maxFileBytes) {
+          return text(`Gli allegati pesano ${totale} byte, oltre il limite di ${cfg.maxFileBytes}.`, true);
+        }
+        try {
+          const id = await inviaEmail(email, {
+            to: A,
+            subject: Oggetto,
+            text: Testo ?? `In allegato: ${allegati.map((f) => f.nome).join(", ")}.`,
+            attachments: allegati.map((f) => ({ filename: f.nome, content: f.buffer, content_type: f.mimeType })),
+          });
+          return text(
+            `Email inviata a ${A.join(", ")} (id ${id}).\nAllegati: ` +
+              allegati.map((f) => `${f.nome} (${f.bytes.length} byte)`).join(", "),
+          );
+        } catch (err) {
+          return text(`Invio non riuscito: ${(err as Error).message}`, true);
+        }
+      },
+    );
+  }
 
   // --- Diagnosi ---
 

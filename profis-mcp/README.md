@@ -17,9 +17,24 @@ Server MCP che collega Claude a **PROFIS (Sistemi) su SISTEMINRETE**, in sola le
 | `profis_annotazioni_cerca` / `profis_annotazione_leggi` | `GD_ANNOTAZIONI/LeggiElenco`, `Leggi` |
 | `profis_report_info` / `profis_report_esegui` | `report/Info/{name}`, `report/RunReport/{name}`: qualsiasi report con il flag "Abilita per il Web" |
 | `profis_anni` / `profis_gruppi` | `System/GetAnni`, `System/GetGruppi` |
+| `profis_documento_invia_email` | scarica uno o più documenti (`GD_DOCUMENTI/DownloadFile`) e li spedisce come allegati con Resend; presente solo se configurato, vedi [Invio per email](#invio-per-email) |
 | `profis_diagnostica` | configurazione del server e risposta completa di PROFIS (status, intestazioni, corpo) per alcune chiamate di prova, con gruppo o `X-BC-Anno` a scelta |
 
 I servizi di scrittura (`Archivia`, `Aggiorna`, `Inserisci`, `Elimina`, upload) esistono in PROFIS ma volutamente **non** sono esposti.
+
+### Invio per email
+
+Il connettore Gmail di claude.ai non riesce ad allegare un file scaricato da un altro connettore. Per questo è il server stesso a spedire la mail: scarica i documenti da PROFIS e li invia con [Resend](https://resend.com).
+
+1. Crea un account su resend.com, aggiungi il dominio (es. `studiobrocchi.it`) in *Domains* e inserisci nel DNS i record che Resend indica. Attendi lo stato *Verified*.
+2. In *API Keys* crea una chiave con permesso *Sending access*.
+3. Aggiungi sul Worker questi Secret:
+   - `RESEND_API_KEY`: la chiave;
+   - `EMAIL_MITTENTE`: es. `Studio FG <profis@studiobrocchi.it>`, sul dominio verificato;
+   - `EMAIL_DESTINATARI_AMMESSI`: elenco separato da virgole di indirizzi (`fabio@studiobrocchi.it`) o interi domini (`@studiobrocchi.it`).
+4. Riconnetti il connettore su claude.ai per vedere il nuovo strumento.
+
+Se manca una delle tre variabili lo strumento non compare. Gli indirizzi fuori elenco vengono rifiutati prima di scaricare qualsiasi file.
 
 ### Report
 
@@ -163,5 +178,5 @@ Questo progetto resta utile perché gestisce da solo login e rinnovo del token, 
 ## Sicurezza
 
 - Le credenziali restano nelle variabili d'ambiente. Non vanno salvate nel repository (`.env` è in `.gitignore`).
-- Il server è in sola lettura. Claude riceve l'istruzione di trattare i contenuti dei documenti come dati e non come istruzioni.
+- Su PROFIS il server è in sola lettura. L'unica azione verso l'esterno è l'invio per email, limitato a `EMAIL_DESTINATARI_AMMESSI`. Claude riceve l'istruzione di trattare i contenuti dei documenti come dati e non come istruzioni.
 - Le risposte troppo lunghe vengono troncate (`PROFIS_MAX_RESPONSE_CHARS`), e i file oltre `PROFIS_MAX_FILE_BYTES` vanno salvati su disco.

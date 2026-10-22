@@ -19,6 +19,16 @@ export interface Config {
   httpPort: number;
   mcpAuthToken?: string;
   allowedHosts?: string[];
+  email?: EmailConfig;
+}
+
+/** Invio dei documenti per email tramite Resend: attivo solo se sono configurati chiave, mittente e destinatari ammessi. */
+export interface EmailConfig {
+  apiUrl: string;
+  apiKey: string;
+  mittente: string;
+  /** Indirizzi completi (mario@studio.it) o interi domini (@studio.it). */
+  destinatariAmmessi: string[];
 }
 
 type Source = Record<string, unknown>;
@@ -65,6 +75,21 @@ export function loadConfig(source: Source = process.env): Config {
     mcpAuthToken: env("MCP_AUTH_TOKEN"),
     allowedHosts: env("MCP_ALLOWED_HOSTS")?.split(",").map((h) => h.trim()),
   };
+
+  const resendKey = env("RESEND_API_KEY");
+  const mittente = env("EMAIL_MITTENTE");
+  const ammessi = env("EMAIL_DESTINATARI_AMMESSI")
+    ?.split(",")
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  if (resendKey && mittente && ammessi?.length) {
+    cfg.email = {
+      apiUrl: (env("RESEND_API_URL") ?? "https://api.resend.com").replace(/\/+$/, ""),
+      apiKey: resendKey,
+      mittente,
+      destinatariAmmessi: ammessi,
+    };
+  }
 
   if (!cfg.staticToken && (!cfg.user || !cfg.passwordSha256)) {
     throw new Error("Indica PROFIS_USER e PROFIS_PASSWORD (o PROFIS_PASSWORD_SHA256), oppure un PROFIS_TOKEN");
